@@ -8,18 +8,57 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
-    
 </head>
 <body>
-    <div class="container">
+    <!-- Header Bar (initially centered, then moves to top) -->
+    <div class="container" id="headerContainer">
         <div class="deco-line"></div>
         <h1>YouTube Downloader</h1>
         <div class="input-group">
             <input type="text" placeholder="https://youtube.com/watch?v=..." id="urlInput">
-            <button onclick="loadVideoInfo()">Start</button>
+            <button onclick="startDownload()" id="startBtn">Start</button>
         </div>
-        <p class="info-text">Füge einfach die YouTube-URL ein und klicke auf Start</p>
+        <p class="info-text" id="infoText">Füge einfach die YouTube-URL ein und klicke auf Start</p>
+    </div>
+
+    <!-- Video Preview Section (hidden initially) -->
+    <div class="video-preview" id="videoPreview">
+        <div class="preview-card">
+            <div class="thumbnail-container">
+                <img src="" alt="Video Thumbnail" id="videoThumbnail">
+                <div class="video-duration" id="videoDuration">00:00</div>
+            </div>
+            <h2 class="video-title" id="videoTitle">Video Titel wird geladen...</h2>
+            <div class="video-info">
+                <span class="video-channel" id="videoChannel">Kanal</span>
+                <span class="video-views" id="videoViews">0 Aufrufe</span>
+            </div>
+            
+            <!-- Download Options -->
+            <div class="download-options">
+                <div class="quality-selector">
+                    <label for="qualitySelect">Qualität/Format:</label>
+                    <div class="custom-select" id="customSelect">
+                        <div class="select-selected">MP4 - 1080p (Full HD)</div>
+                        <div class="select-items select-hide">
+                            <div data-value="mp4-1080p">MP4 - 1080p (Full HD)</div>
+                            <div data-value="mp4-720p">MP4 - 720p (HD)</div>
+                            <div data-value="mp4-480p">MP4 - 480p</div>
+                            <div data-value="mp4-360p">MP4 - 360p</div>
+                            <div data-value="mp3-320">MP3 - 320 kbps</div>
+                            <div data-value="mp3-256">MP3 - 256 kbps</div>
+                            <div data-value="mp3-192">MP3 - 192 kbps</div>
+                            <div data-value="mp3-128">MP3 - 128 kbps</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="qualitySelect" value="mp4-1080p">
+                </div>
+                <button class="download-btn" onclick="initiateDownload()">
+                    <span class="btn-icon">⬇</span>
+                    Download starten
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Custom Modal -->
@@ -32,6 +71,12 @@
         </div>
     </div>
 
-    
+    <!-- Loading Spinner -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Video wird geladen...</p>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
