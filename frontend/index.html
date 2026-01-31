@@ -61,6 +61,34 @@
         </div>
     </div>
 
+    <!-- Download Progress Section (hidden initially) -->
+    <div class="download-progress-container" id="downloadProgressContainer">
+        <div class="progress-card">
+            <div class="progress-header">
+                <h3 class="progress-title">Download läuft...</h3>
+                <button class="cancel-btn" onclick="cancelDownload()" title="Download abbrechen">
+                    <span class="cancel-icon">✕</span>
+                </button>
+            </div>
+            
+            <div class="progress-info">
+                <div class="progress-details">
+                    <span class="progress-percent" id="progressPercent">0%</span>
+                    <span class="progress-speed" id="progressSpeed">0 MB/s</span>
+                </div>
+            </div>
+            
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-bar-fill" id="progressBarFill"></div>
+                    <div class="progress-bar-glow"></div>
+                </div>
+            </div>
+            
+            <p class="progress-status" id="progressStatus">Datei wird heruntergeladen...</p>
+        </div>
+    </div>
+
     <!-- Custom Modal -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">

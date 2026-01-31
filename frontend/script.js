@@ -152,8 +152,100 @@ function displayVideoPreview(videoData) {
     views.textContent = `${videoData.views} Aufrufe`;
     duration.textContent = videoData.duration;
     
+    // Dynamisches Dropdown mit verfügbaren Qualitäten erstellen
+    buildQualityDropdown(videoData.video_qualities || [], videoData.audio_qualities || []);
+    
     // Show preview
     preview.classList.add('active');
+}
+
+// Erstelle Dropdown mit verfügbaren Qualitäten
+function buildQualityDropdown(videoQualities, audioQualities) {
+    const selectItems = document.querySelector('.select-items');
+    const selectSelected = document.querySelector('.select-selected');
+    const hiddenInput = document.getElementById('qualitySelect');
+    
+    // Leere das Dropdown
+    selectItems.innerHTML = '';
+    
+    // Quality-Namen Mapping
+    const qualityNames = {
+        1080: 'MP4 - 1080p (Full HD)',
+        720: 'MP4 - 720p (HD)',
+        480: 'MP4 - 480p',
+        360: 'MP4 - 360p',
+        320: 'MP3 - 320 kbps',
+        256: 'MP3 - 256 kbps',
+        192: 'MP3 - 192 kbps',
+        128: 'MP3 - 128 kbps'
+    };
+    
+    let firstItem = null;
+    
+    // Video-Qualitäten hinzufügen
+    videoQualities.forEach((quality, index) => {
+        const div = document.createElement('div');
+        div.setAttribute('data-value', `mp4-${quality}p`);
+        div.textContent = qualityNames[quality] || `MP4 - ${quality}p`;
+        div.addEventListener('click', handleDropdownItemClick);
+        selectItems.appendChild(div);
+        
+        if (index === 0) {
+            firstItem = div;
+        }
+    });
+    
+    // Audio-Qualitäten hinzufügen
+    audioQualities.forEach(quality => {
+        const div = document.createElement('div');
+        div.setAttribute('data-value', `mp3-${quality}`);
+        div.textContent = qualityNames[quality] || `MP3 - ${quality} kbps`;
+        div.addEventListener('click', handleDropdownItemClick);
+        selectItems.appendChild(div);
+        
+        if (!firstItem) {
+            firstItem = div;
+        }
+    });
+    
+    // Falls keine Qualitäten verfügbar, zeige Fallback
+    if (!firstItem) {
+        const div = document.createElement('div');
+        div.setAttribute('data-value', 'mp4-720p');
+        div.textContent = 'MP4 - 720p (HD)';
+        div.addEventListener('click', handleDropdownItemClick);
+        selectItems.appendChild(div);
+        firstItem = div;
+    }
+    
+    // Setze erste Option als ausgewählt
+    if (firstItem) {
+        selectSelected.textContent = firstItem.textContent;
+        hiddenInput.value = firstItem.getAttribute('data-value');
+        firstItem.classList.add('same-as-selected');
+    }
+}
+
+// Handler für Dropdown-Item-Klicks
+function handleDropdownItemClick(e) {
+    e.stopPropagation();
+    
+    const selectSelected = document.querySelector('.select-selected');
+    const selectItems = document.querySelector('.select-items');
+    const hiddenInput = document.getElementById('qualitySelect');
+    const items = selectItems.querySelectorAll('div');
+    
+    // Remove previous selection
+    items.forEach(i => i.classList.remove('same-as-selected'));
+    
+    // Update selected item
+    selectSelected.textContent = this.textContent;
+    hiddenInput.value = this.getAttribute('data-value');
+    this.classList.add('same-as-selected');
+    
+    // Close dropdown
+    selectItems.classList.add('select-hide');
+    selectSelected.classList.remove('select-arrow-active');
 }
 
 // Initiate actual download
@@ -175,11 +267,9 @@ async function initiateDownload() {
         const result = await pywebview.api.start_download(url, selectedQuality);
         
         hideLoading();
-        showModal(
-            'Download gestartet!', 
-            `Dein Video wird in ${selectedQualityText} heruntergeladen. Der Download läuft im Hintergrund.`,
-            'success'
-        );
+        
+        // Progress-Anzeige einblenden
+        showProgressBar();
         
         console.log('Download started:', {
             url: url,
@@ -214,14 +304,63 @@ async function initiateDownload() {
     */
 }
 
+// Show Progress Bar
+function showProgressBar() {
+    const container = document.getElementById('downloadProgressContainer');
+    
+    // Reset Progress-Werte
+    document.getElementById('progressPercent').textContent = '0%';
+    document.getElementById('progressSpeed').textContent = '0 MB/s';
+    document.getElementById('progressBarFill').style.width = '0%';
+    document.getElementById('progressStatus').textContent = 'Datei wird heruntergeladen...';
+    
+    container.classList.add('active');
+}
+
+// Hide Progress Bar
+function hideProgressBar() {
+    const container = document.getElementById('downloadProgressContainer');
+    container.classList.remove('active');
+}
+
+// Verhindere Schließen durch Klick außerhalb (Download läuft)
+document.getElementById('downloadProgressContainer')?.addEventListener('click', function(e) {
+    // Nur schließen, wenn direkt auf Overlay geklickt wird (nicht erlaubt während Download)
+    if (e.target === this) {
+        // Optional: Zeige Hinweis dass Download läuft
+        // showModal('Download läuft', 'Bitte warte bis der Download abgeschlossen ist oder klicke auf X zum Abbrechen.', 'error');
+    }
+});
+
 // Optional Progress Update Functions (vom Backend aufgerufen)
 function updateProgress(percent, speed) {
     console.log(`Download Progress: ${percent} @ ${speed}`);
-    // Hier könntest du einen Progress-Bar anzeigen
+    
+    // Update Progress-Anzeige
+    const percentEl = document.getElementById('progressPercent');
+    const speedEl = document.getElementById('progressSpeed');
+    const fillEl = document.getElementById('progressBarFill');
+    
+    // Prozent anzeigen
+    percentEl.textContent = percent;
+    
+    // Geschwindigkeit anzeigen
+    speedEl.textContent = speed || '0 MB/s';
+    
+    // Progress-Bar füllen
+    const percentValue = parseFloat(percent.replace('%', ''));
+    if (!isNaN(percentValue)) {
+        fillEl.style.width = percentValue + '%';
+    }
 }
 
 function downloadFinished() {
     console.log('Download finished!');
+    
+    // Verstecke Progress-Bar
+    hideProgressBar();
+    
+    // Zeige Success-Modal
     showModal(
         'Download abgeschlossen!',
         'Dein Video wurde erfolgreich heruntergeladen und befindet sich in deinem Downloads-Ordner.',
@@ -231,11 +370,33 @@ function downloadFinished() {
 
 function downloadError(error) {
     console.error('Download Error:', error);
+    
+    // Verstecke Progress-Bar
+    hideProgressBar();
+    
+    // Zeige Error-Modal
     showModal(
         'Download fehlgeschlagen',
         `Ein Fehler ist aufgetreten: ${error}`,
         'error'
     );
+}
+
+// Cancel Download Function
+function cancelDownload() {
+    // Hier würdest du das Backend aufrufen, um den Download abzubrechen
+    console.log('Download cancelled by user');
+    
+    hideProgressBar();
+    
+    showModal(
+        'Download abgebrochen',
+        'Der Download wurde erfolgreich abgebrochen.',
+        'error'
+    );
+    
+    // TODO: Backend-Call zum Abbrechen implementieren
+    // await pywebview.api.cancel_download();
 }
 
 // Enter key to start
