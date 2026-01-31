@@ -361,7 +361,7 @@ button:active {
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    border-top: 6px solid var(--accent);
+    border-top: 6px solid var(--text-secondary);
     transition: transform 0.3s ease;
 }
 
@@ -369,10 +369,15 @@ button:active {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     border-bottom-color: var(--accent);
+       border-top-color: var(--accent);
+    border-left-color: var(--accent);
+    border-right-color: var(--accent);
+    /*border-bottom-color: var(--border);*/
 }
 
 .select-selected.select-arrow-active:after {
     transform: translateY(-50%) rotate(180deg);
+    border-top-color: var(--accent);
 }
 
 .select-selected:hover {
@@ -380,8 +385,11 @@ button:active {
     background: var(--bg-card);
 }
 
+
+
 .select-items {
-    position: absolute;
+    transform-origin: top;
+     position: absolute;
     background: var(--bg-card);
     border: 2px solid var(--accent);
     border-top: none;
@@ -390,9 +398,17 @@ button:active {
     left: 0;
     right: 0;
     z-index: 99;
-    height: 180px;
-    overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+
+    max-height: 0;
+    overflow-y: hidden;
+
+    opacity: 0;
+    transform: translateY(-10px);
+
+    transition:
+        max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.25s ease,
+        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .select-items div {
@@ -416,7 +432,19 @@ button:active {
 }
 
 .select-hide {
-    display: none;
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+.select-items:not(.select-hide) {
+    max-height: 180px;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+     overflow-y: auto;
+     transition-delay: 0s, 0.1s, 0s;
 }
 
 /* Custom Scrollbar for dropdown */
