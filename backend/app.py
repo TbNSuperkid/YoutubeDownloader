@@ -1,6 +1,7 @@
 import webview
 from api import Api
 
+icon_path = "frontend/assets/icon.ico"
 
 if __name__ == "__main__":
     api = Api()
@@ -10,7 +11,8 @@ if __name__ == "__main__":
         url="../frontend/index.html",
         js_api=api,
         maximized=True,
-        resizable=True
+        resizable=True,
+        #icon="../frontend/assets/icon.png"
     )
 
-    webview.start()
+    webview.start( icon=icon_path)
