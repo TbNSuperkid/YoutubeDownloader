@@ -222,7 +222,7 @@ button:active {
 /* Video Preview Section */
 .video-preview {
     position: fixed;
-    top: 240px;
+    top: 220px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 5;

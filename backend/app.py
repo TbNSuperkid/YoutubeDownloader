@@ -9,7 +9,8 @@ if __name__ == "__main__":
         title="Youtube Downloader",
         url="../frontend/index.html",
         js_api=api,
-        maximized=True
+        maximized=True,
+        resizable=True
     )
 
     webview.start()

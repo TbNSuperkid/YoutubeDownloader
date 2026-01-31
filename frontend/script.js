@@ -68,6 +68,33 @@ async function startDownload() {
     // Show loading
     showLoading();
     
+    // ===============================
+    // BACKEND INTEGRATION
+    // ===============================
+    try {
+        // Echte API-Call zum Python Backend
+        const videoData = await pywebview.api.get_video_info(url);
+        
+        if (videoData.error) {
+            hideLoading();
+            showModal('Fehler', `Video konnte nicht geladen werden: ${videoData.error}`, 'error');
+            return;
+        }
+        
+        // Video-Vorschau anzeigen
+        displayVideoPreview(videoData);
+        moveContainerToTop();
+        hideLoading();
+        
+    } catch (error) {
+        hideLoading();
+        showModal('Fehler', 'Verbindung zum Backend fehlgeschlagen. Bitte starte die App neu.', 'error');
+        console.error('Backend Error:', error);
+    }
+    
+    /* ===============================
+     * MOCKUP CODE (AUSKOMMENTIERT)
+     * ===============================
     // Simulate API call to get video info
     // In production, you would call your backend here
     setTimeout(() => {
@@ -83,8 +110,12 @@ async function startDownload() {
             showModal('Fehler', 'Video konnte nicht geladen werden. Bitte versuche es erneut.', 'error');
         }
     }, 1500);
+    */
 }
 
+/* ===============================
+ * MOCKUP FUNCTION (AUSKOMMENTIERT)
+ * ===============================
 // Mock function to simulate video info retrieval
 // In production, replace this with actual API call
 function getVideoInfo(url) {
@@ -97,6 +128,7 @@ function getVideoInfo(url) {
         thumbnail: "https://via.placeholder.com/1280x720/1a1a24/ff3366?text=Video+Thumbnail"
     };
 }
+*/
 
 // Move container to top of screen
 function moveContainerToTop() {
@@ -125,13 +157,44 @@ function displayVideoPreview(videoData) {
 }
 
 // Initiate actual download
-function initiateDownload() {
+async function initiateDownload() {
     const qualitySelect = document.getElementById('qualitySelect');
-    const selectedQuality = qualitySelect.options[qualitySelect.selectedIndex].text;
+    const selectedQuality = qualitySelect.value; // z.B. "mp4-1080p"
+    const selectedQualityText = qualitySelect.options ? 
+        qualitySelect.options[qualitySelect.selectedIndex].text : 
+        document.querySelector('.select-selected').textContent;
     const url = document.getElementById('urlInput').value;
     
     showLoading();
     
+    // ===============================
+    // BACKEND INTEGRATION
+    // ===============================
+    try {
+        // Echten Download starten
+        const result = await pywebview.api.start_download(url, selectedQuality);
+        
+        hideLoading();
+        showModal(
+            'Download gestartet!', 
+            `Dein Video wird in ${selectedQualityText} heruntergeladen. Der Download läuft im Hintergrund.`,
+            'success'
+        );
+        
+        console.log('Download started:', {
+            url: url,
+            quality: selectedQuality
+        });
+        
+    } catch (error) {
+        hideLoading();
+        showModal('Fehler', 'Download konnte nicht gestartet werden. Bitte versuche es erneut.', 'error');
+        console.error('Download Error:', error);
+    }
+    
+    /* ===============================
+     * MOCKUP CODE (AUSKOMMENTIERT)
+     * ===============================
     // Simulate download initiation
     setTimeout(() => {
         hideLoading();
@@ -148,6 +211,31 @@ function initiateDownload() {
             quality: qualitySelect.value
         });
     }, 1000);
+    */
+}
+
+// Optional Progress Update Functions (vom Backend aufgerufen)
+function updateProgress(percent, speed) {
+    console.log(`Download Progress: ${percent} @ ${speed}`);
+    // Hier könntest du einen Progress-Bar anzeigen
+}
+
+function downloadFinished() {
+    console.log('Download finished!');
+    showModal(
+        'Download abgeschlossen!',
+        'Dein Video wurde erfolgreich heruntergeladen und befindet sich in deinem Downloads-Ordner.',
+        'success'
+    );
+}
+
+function downloadError(error) {
+    console.error('Download Error:', error);
+    showModal(
+        'Download fehlgeschlagen',
+        `Ein Fehler ist aufgetreten: ${error}`,
+        'error'
+    );
 }
 
 // Enter key to start
