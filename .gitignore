@@ -7,9 +7,15 @@ __pycache__/
 env/
 venv/
 ENV/
+backend/__pycache__/
 
 # Downloads
 downloads/
+
+# PyInstaller
+build/
+dist/
+*.spec
 
 # IDE
 .vscode/

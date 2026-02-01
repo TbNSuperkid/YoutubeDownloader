@@ -1,8 +1,43 @@
+# -*- coding: utf-8 -*-
+"""
+YouTube Downloader API
+Backend-Logik fuer Downloads
+"""
+
 import yt_dlp
 import webview
 import threading
 import os
 from pathlib import Path
+import sys
+
+
+# ===============================
+# FFMPEG PATH SETUP (fuer .exe)
+# ===============================
+def setup_ffmpeg_path():
+    """
+    Findet FFmpeg in der .exe oder im System.
+    Wird beim Modul-Import automatisch aufgerufen.
+    """
+    try:
+        # Wenn als .exe gestartet: PyInstaller speichert Dateien in _MEIPASS
+        base_path = sys._MEIPASS
+        ffmpeg_path = os.path.join(base_path, 'ffmpeg.exe')
+        
+        # Pruefe ob FFmpeg in .exe vorhanden
+        if os.path.exists(ffmpeg_path):
+            # Fuege FFmpeg-Pfad zum System PATH hinzu
+            os.environ['PATH'] = base_path + os.pathsep + os.environ.get('PATH', '')
+            return True
+        else:
+            return False
+    except Exception:
+        # Normale Ausfuehrung (nicht als .exe)
+        return False
+
+# FFmpeg beim Modul-Import einrichten
+setup_ffmpeg_path()
 
 
 class Api:
