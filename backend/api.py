@@ -17,27 +17,82 @@ import sys
 # ===============================
 def setup_ffmpeg_path():
     """
-    Findet FFmpeg in der .exe oder im System.
+    Findet FFmpeg in der .exe, im Installer-Verzeichnis oder im System.
     Wird beim Modul-Import automatisch aufgerufen.
     """
+    # Moegliche FFmpeg-Pfade (in Prioritaets-Reihenfolge)
+    search_paths = []
+    
+    # 1. PyInstaller temp Ordner (_MEIPASS)
     try:
-        # Wenn als .exe gestartet: PyInstaller speichert Dateien in _MEIPASS
         base_path = sys._MEIPASS
-        ffmpeg_path = os.path.join(base_path, 'ffmpeg.exe')
+        search_paths.append(base_path)
+    except:
+        pass
+    
+    # 2. Installations-Verzeichnis (neben der .exe)
+    try:
+        exe_dir = os.path.dirname(sys.executable)
+        search_paths.append(exe_dir)
+    except:
+        pass
+    
+    # 3. Aktuelles Arbeitsverzeichnis
+    search_paths.append(os.getcwd())
+    
+    # 4. Script-Verzeichnis
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        search_paths.append(script_dir)
+    except:
+        pass
+    
+    # Suche FFmpeg in allen Pfaden
+    for path in search_paths:
+        ffmpeg_path = os.path.join(path, 'ffmpeg.exe')
+        ffprobe_path = os.path.join(path, 'ffprobe.exe')
         
-        # Pruefe ob FFmpeg in .exe vorhanden
         if os.path.exists(ffmpeg_path):
             # Fuege FFmpeg-Pfad zum System PATH hinzu
-            os.environ['PATH'] = base_path + os.pathsep + os.environ.get('PATH', '')
+            os.environ['PATH'] = path + os.pathsep + os.environ.get('PATH', '')
             return True
-        else:
-            return False
-    except Exception:
-        # Normale Ausfuehrung (nicht als .exe)
-        return False
+    
+    # Nicht gefunden - nutze System-Installation
+    return False
 
 # FFmpeg beim Modul-Import einrichten
 setup_ffmpeg_path()
+
+
+def find_ffmpeg():
+    """
+    Findet den Pfad zu ffmpeg.exe
+    """
+    search_paths = []
+    
+    # PyInstaller temp Ordner
+    try:
+        search_paths.append(sys._MEIPASS)
+    except:
+        pass
+    
+    # Installations-Verzeichnis
+    try:
+        search_paths.append(os.path.dirname(sys.executable))
+    except:
+        pass
+    
+    # Aktuelles Verzeichnis
+    search_paths.append(os.getcwd())
+    
+    # Suche in allen Pfaden
+    for path in search_paths:
+        ffmpeg_path = os.path.join(path, 'ffmpeg.exe')
+        if os.path.exists(ffmpeg_path):
+            return ffmpeg_path
+    
+    # Fallback: Hoffe es ist im System PATH
+    return 'ffmpeg'
 
 
 class Api:
@@ -208,11 +263,13 @@ class Api:
 
         if mode == "mp3":
             # Audio-Download
+            ffmpeg_loc = find_ffmpeg()
             ydl_opts = {
                 "format": "bestaudio/best",
                 "outtmpl": f"{self.download_path}/%(title)s.%(ext)s",
                 "progress_hooks": [progress_hook],
                 "nooverwrites": False,  # Erlaube Überschreiben (wir machen eigene Nummerierung)
+                "ffmpeg_location": ffmpeg_loc,  # Expliziter FFmpeg-Pfad
                 "postprocessors": [{
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": "mp3",
@@ -223,6 +280,7 @@ class Api:
         else:  # mp4
             # Video-Download mit H.264 Codec (kompatibel mit allen Windows-Playern)
             height = quality_value.replace("p", "") if quality_value else "1080"
+            ffmpeg_loc = find_ffmpeg()
             ydl_opts = {
                 # Lade NUR H.264 Videos herunter (kein AV1, kein VP9)
                 # avc1 = H.264, mp4a = AAC Audio
@@ -235,6 +293,7 @@ class Api:
                 "outtmpl": f"{self.download_path}/%(title)s.%(ext)s",
                 "progress_hooks": [progress_hook],
                 "nooverwrites": False,  # Erlaube Überschreiben (wir machen eigene Nummerierung)
+                "ffmpeg_location": ffmpeg_loc,  # Expliziter FFmpeg-Pfad
             }
 
         try:
